@@ -52,11 +52,6 @@
                     <property name="label" translatable="yes">Proxy</property>
                   </object>
                 </child>
-                <child>
-                  <object class="GtkButton" id="stop_button">
-                    <property name="label" translatable="yes">Stop</property>
-                  </object>
-                </child>
               </object>
             </child>
           </object>
