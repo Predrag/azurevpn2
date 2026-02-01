@@ -1,0 +1,5 @@
+{
+  "name": "python3-paramiko",
+  "buildsystem": "simple",
+  "build-commands": ["pip3 install --prefix=/app --no-build-isolation"]
+}

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=gsettingstest
+Exec=gsettingstest
+Icon=org.gnome.gsettingstest
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=GTK;
+StartupNotify=true
+DBusActivatable=true
