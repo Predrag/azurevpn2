@@ -220,7 +220,6 @@ class SshMethods:
                     pass
             finally:
                 self._proc = None
-                return
 
         # Otherwise, kill any process listening on the configured local port
         if self._is_port_in_use(self.local_address, self.local_port):
@@ -315,7 +314,3 @@ class SshMethods:
         except Exception as exc:
             print(f"Failed to start ssh process: {exc}")
             return None
-
-a = SshMethods()
-# a.start_vpn('vpnuser@192.168.122.148', local_port=1080, bind_address='127.0.0.1', key_file='~/.ssh/githubSsh', background=True, extra_options=None)
-# a.stop_vpn()

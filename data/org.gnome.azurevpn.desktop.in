@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=azurevpn
+Exec=azurevpn
+Icon=org.gnome.azurevpn
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=GTK;
+StartupNotify=true
+DBusActivatable=true

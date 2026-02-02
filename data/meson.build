@@ -1,6 +1,6 @@
 desktop_file = i18n.merge_file(
-        input: 'org.gnome.gsettingstest.desktop.in',
-       output: 'org.gnome.gsettingstest.desktop',
+        input: 'org.gnome.azurevpn.desktop.in',
+       output: 'org.gnome.azurevpn.desktop',
          type: 'desktop',
        po_dir: '../po',
       install: true,
@@ -13,8 +13,8 @@ if desktop_utils.found()
 endif
 
 appstream_file = i18n.merge_file(
-        input: 'org.gnome.gsettingstest.metainfo.xml.in',
-       output: 'org.gnome.gsettingstest.metainfo.xml',
+        input: 'org.gnome.azurevpn.metainfo.xml.in',
+       output: 'org.gnome.azurevpn.metainfo.xml',
        po_dir: '../po',
       install: true,
   install_dir: get_option('datadir') / 'metainfo'
@@ -24,7 +24,7 @@ appstreamcli = find_program('appstreamcli', required: false, disabler: true)
 test('Validate appstream file', appstreamcli,
      args: ['validate', '--no-net', '--explain', appstream_file])
 
-install_data('org.gnome.gsettingstest.gschema.xml',
+install_data('org.gnome.azurevpn.gschema.xml',
   install_dir: get_option('datadir') / 'glib-2.0' / 'schemas'
 )
 
@@ -37,8 +37,8 @@ test('Validate schema file',
 service_conf = configuration_data()
 service_conf.set('bindir', get_option('prefix') / get_option('bindir'))
 configure_file(
-  input: 'org.gnome.gsettingstest.service.in',
-  output: 'org.gnome.gsettingstest.service',
+  input: 'org.gnome.azurevpn.service.in',
+  output: 'org.gnome.azurevpn.service',
   configuration: service_conf,
   install_dir: get_option('datadir') / 'dbus-1' / 'services'
 )

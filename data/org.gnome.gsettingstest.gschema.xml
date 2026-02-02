@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<schemalist gettext-domain="gsettingstest">
-	<schema id="org.gnome.gsettingstest" path="/org/gnome/gsettingstest/">
-	</schema>
-</schemalist>

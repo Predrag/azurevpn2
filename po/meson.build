@@ -1,1 +1,1 @@
-i18n.gettext('gsettingstest', preset: 'glib')
+i18n.gettext('azurevpn', preset: 'glib')

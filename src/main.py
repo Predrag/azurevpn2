@@ -25,20 +25,17 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
 from gi.repository import Gtk, Gio, Adw
-from .window import GsettingstestWindow
+from .window import AzurevpnWindow
 from .proxy_state import ProxyState
 
 
-class GsettingstestApplication(Adw.Application):
+class AzurevpnApplication(Adw.Application):
     """The main application singleton class."""
 
     def __init__(self):
-        super().__init__(application_id='org.gnome.gsettingstest',
-                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
-                         resource_base_path='/org/gnome/gsettingstest')
-        self.create_action('quit', lambda *_: self.quit(), ['<control>q'])
-        self.create_action('about', self.on_about_action)
-        self.create_action('preferences', self.on_preferences_action)
+        super().__init__(application_id='org.gnome.azurevpn',
+                 flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
+                 resource_base_path='/org/gnome/azurevpn')
         # Zisti stav proxy pri spustení aplikácie
         self.proxy_state = ProxyState()
 
@@ -51,7 +48,7 @@ class GsettingstestApplication(Adw.Application):
 
         win = self.props.active_window
         if not win:
-            win = GsettingstestWindow(application=self)
+            win = AzurevpnWindow(application=self)
         # Update UI (button state) after window is created
         try:
             btn = getattr(win, 'proxy_button', None)
@@ -67,22 +64,6 @@ class GsettingstestApplication(Adw.Application):
         except Exception:
             pass
         win.present()
-
-    def on_about_action(self, *args):
-        """Callback for the app.about action."""
-        about = Adw.AboutDialog(application_name='gsettingstest',
-                                application_icon='org.gnome.gsettingstest',
-                                developer_name='predrag',
-                                version='0.1.0',
-                                developers=['predrag'],
-                                copyright='© 2026 predrag')
-        # Translators: Replace "translator-credits" with your name/username, and optionally an email or URL.
-        about.set_translator_credits(_('translator-credits'))
-        about.present(self.props.active_window)
-
-    def on_preferences_action(self, widget, _):
-        """Callback for the app.preferences action."""
-        print('app.preferences action activated')
 
     def create_action(self, name, callback, shortcuts=None):
         """Add an application action.
@@ -102,5 +83,5 @@ class GsettingstestApplication(Adw.Application):
 
 def main(version):
     """The application's entry point."""
-    app = GsettingstestApplication()
+    app = AzurevpnApplication()
     return app.run(sys.argv)

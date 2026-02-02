@@ -1,9 +1,9 @@
 pkgdatadir = get_option('prefix') / get_option('datadir') / meson.project_name()
-moduledir = pkgdatadir / 'gsettingstest'
+moduledir = pkgdatadir / 'azurevpn'
 gnome = import('gnome')
 
-gnome.compile_resources('gsettingstest',
-  'gsettingstest.gresource.xml',
+gnome.compile_resources('azurevpn',
+  'azurevpn.gresource.xml',
   gresource_bundle: true,
   install: true,
   install_dir: pkgdatadir,
@@ -18,15 +18,15 @@ conf.set('localedir', get_option('prefix') / get_option('localedir'))
 conf.set('pkgdatadir', pkgdatadir)
 
 configure_file(
-  input: 'gsettingstest.in',
-  output: 'gsettingstest',
+  input: 'azurevpn.in',
+  output: 'azurevpn',
   configuration: conf,
   install: true,
   install_dir: get_option('bindir'),
   install_mode: 'rwxr-xr-x'
 )
 
-gsettingstest_sources = [
+azurevpn_sources = [
   '__init__.py',
   'main.py',
   'window.py',
@@ -34,4 +34,4 @@ gsettingstest_sources = [
   'ssh_methods.py',
 ]
 
-install_data(gsettingstest_sources, install_dir: moduledir)
+install_data(azurevpn_sources, install_dir: moduledir)

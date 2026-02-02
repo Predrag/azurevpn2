@@ -1,4 +1,4 @@
-application_id = 'org.gnome.gsettingstest'
+application_id = 'org.gnome.azurevpn'
 
 scalable_dir = 'hicolor' / 'scalable' / 'apps'
 install_data(
