@@ -5,10 +5,15 @@
   <project_license>GPL-3.0-or-later</project_license>
 
   <name>Azure VPN</name>
-  <summary>Vyborne</summary>
+  <summary>Azure VPN — jednoduchý klient na vytvorenie lokálneho SOCKS5 tunela cez SSH</summary>
   <description>
-    <p>Program na pripojenie k Azure VPN</p>
+    <p>Azure VPN poskytuje jednoduché a bezpečné rozhranie na rýchle vytvorenie lokálneho SOCKS5 proxy tunela pomocou systémového <code>ssh -D</code>. Umožňuje pripojiť sa k vzdialenému hostu (<em>user@host</em>), použiť privátny kľúč, zvoliť lokálny port a pohodlne spustiť alebo ukončiť tunel bez potreby manuálnych príkazov.</p>
+    <p>Aplikácia automaticky rieši konflikty portov (nájde a ukončí procesy, ktoré port blokujú), zapisuje PID procesov pre neskoršie ukončenie a v prostredí Flatpak využíva host operácie cez <code>flatpak-spawn</code>. Po spustení tunela môže nastaviť proxy premenné pre aplikácie spustené z tej istej relácie, aby využívali proxy.</p>
+    <p>Je určená pre používateľov, ktorí potrebujú rýchlo smerovať svoj sieťový traffic cez SSH tunel (napr. pri práci s remote sieťami alebo pre bezpečné prehliadanie). Používa systémový <code>ssh</code>, preto sa spolieha na existujúce mechanizmy overovania (kľúče, ssh-agent) a nezaznamenáva sieťový obsah ani neodosiela telemetriu.</p>
   </description>
+
+  <!-- Application icon (theme name) -->
+  <icon type="default">azurevpn</icon>
 
   <developer id="tld.vendor">
     <name>Martin Ďurišin</name>
@@ -58,8 +63,8 @@
   </screenshots>
 
   <releases>
-    <release version="1.0.1" date="2024-01-18">
-      <url type="details">https://example.org/changelog.html#version_1.0.1</url>
+    <release version="1.0.3" date="2026-02-02">
+      <url type="details">https://example.org/changelog.html#version_1.0.2</url>
       <description translate="no">
         <p>Release description</p>
         <ul>
