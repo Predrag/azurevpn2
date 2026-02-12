@@ -119,11 +119,20 @@ class AzurevpnWindow(Adw.ApplicationWindow):
                 self.proxy_button.remove_css_class("suggested-action")
                 self.proxy_button.add_css_class("destructive-action")
                 self.proxy_button.set_label("Zapnuť Proxy")
+                proxy_active = False
             else:
                 # proxy is running
                 self.proxy_button.remove_css_class("destructive-action")
                 self.proxy_button.add_css_class("suggested-action")
                 self.proxy_button.set_label("Vypnuť Proxy")
+                proxy_active = True
+            # Update tray icon menu label
+            try:
+                tray = getattr(self.get_application(), "_tray", None)
+                if tray:
+                    tray.update_proxy_label(proxy_active)
+            except Exception:
+                pass
         except Exception:
             # best-effort, don't crash UI
             self.logger.exception("Chyba pri aktualizácii UI stavu proxy")

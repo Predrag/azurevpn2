@@ -10,7 +10,10 @@
     "--socket=fallback-x11",
     "--device=dri",
     "--socket=wayland",
-    "--talk-name=org.freedesktop.Flatpak"
+    "--talk-name=org.freedesktop.Flatpak",
+    "--talk-name=org.kde.StatusNotifierWatcher",
+    "--own-name=org.kde.StatusNotifierItem-2-1",
+    "--own-name=org.gnome.azurevpn.StatusNotifierItem"
   ],
   "cleanup": [
     "/include",

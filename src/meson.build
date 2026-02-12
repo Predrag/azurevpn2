@@ -32,6 +32,7 @@ azurevpn_sources = [
   'window.py',
   'proxy_state.py',
   'ssh_methods.py',
+  'tray_icon.py',
 ]
 
 install_data(azurevpn_sources, install_dir: moduledir)

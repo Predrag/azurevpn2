@@ -21,23 +21,29 @@ import subprocess
 import sys
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Gtk, Gio, Adw
 from .window import AzurevpnWindow
 from .proxy_state import ProxyState
+from .tray_icon import TrayIcon
 
 
 class AzurevpnApplication(Adw.Application):
     """The main application singleton class."""
 
     def __init__(self):
-        super().__init__(application_id='org.gnome.azurevpn',
-                 flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
-                 resource_base_path='/org/gnome/azurevpn')
+        super().__init__(
+            application_id="org.gnome.azurevpn",
+            flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
+            resource_base_path="/org/gnome/azurevpn",
+        )
         # Zisti stav proxy pri spustení aplikácie
         self.proxy_state = ProxyState()
+        # System tray icon
+        self._tray = TrayIcon(self)
+        self._tray.register()
 
     def do_activate(self):
         """Called when the application is activated.
@@ -51,16 +57,15 @@ class AzurevpnApplication(Adw.Application):
             win = AzurevpnWindow(application=self)
         # Update UI (button state) after window is created
         try:
-            btn = getattr(win, 'proxy_button', None)
+            btn = getattr(win, "proxy_button", None)
             if self.proxy_state.current_state.stdout.strip() == "'none'":
                 # set label or style according to previously-detected state
-                    btn.set_label('Zapnuť Proxy')
-                    btn.add_css_class("destructive-action")
+                btn.set_label("Zapnuť Proxy")
+                btn.add_css_class("destructive-action")
             else:
-                btn.set_label('Vypnuť Proxy')
+                btn.set_label("Vypnuť Proxy")
                 btn.add_css_class("suggested-action")
-                
-                    
+
         except Exception:
             pass
         win.present()
