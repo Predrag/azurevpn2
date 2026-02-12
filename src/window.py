@@ -6,9 +6,10 @@ from gi.repository import Adw, Gtk, GLib
 from .proxy_state import ProxyState
 from .ssh_methods import SshMethods
 
-@Gtk.Template(resource_path='/org/gnome/azurevpn/window.ui')
+
+@Gtk.Template(resource_path="/org/gnome/azurevpn/window.ui")
 class AzurevpnWindow(Adw.ApplicationWindow):
-    __gtype_name__ = 'AzurevpnWindow'
+    __gtype_name__ = "AzurevpnWindow"
 
     # label = Gtk.Template.Child()
     zapni_vpn_button: Gtk.Button = Gtk.Template.Child()
@@ -37,7 +38,7 @@ class AzurevpnWindow(Adw.ApplicationWindow):
 
     def _setup_ui_logging(self):
         buf = self.log_view.get_buffer()
-        logger = logging.getLogger('azurevpn')
+        logger = logging.getLogger("azurevpn")
         logger.setLevel(logging.DEBUG)
 
         class GtkHandler(logging.Handler):
@@ -56,7 +57,9 @@ class AzurevpnWindow(Adw.ApplicationWindow):
                 return False
 
         handler = GtkHandler(buf)
-        handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s %(levelname)s: %(message)s")
+        )
         logger.addHandler(handler)
         # expose logger to instance methods
         self.logger = logger
@@ -67,7 +70,7 @@ class AzurevpnWindow(Adw.ApplicationWindow):
                 self.log_func = log_func
 
             def write(self, message):
-                message = message.rstrip('\n')
+                message = message.rstrip("\n")
                 if message:
                     self.log_func(message)
 
@@ -136,34 +139,46 @@ class AzurevpnWindow(Adw.ApplicationWindow):
             "mode",
         ]
         # start subprocess with line-buffered text output
-        self._gsettings_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
+        self._gsettings_proc = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            bufsize=1,
+        )
         fd = self._gsettings_proc.stdout.fileno()
         try:
             os.set_blocking(fd, False)
         except Exception:
             pass
         self._gsettings_channel = GLib.IOChannel.unix_new(fd)
-        GLib.io_add_watch(self._gsettings_channel, GLib.IO_IN | GLib.IO_HUP | GLib.IO_ERR, self._on_gsettings_output)
+        GLib.io_add_watch(
+            self._gsettings_channel,
+            GLib.IO_IN | GLib.IO_HUP | GLib.IO_ERR,
+            self._on_gsettings_output,
+        )
         # ensure we stop the child when window is destroyed
         try:
-            self.connect('destroy', lambda w: self._stop_gsettings_monitor())
+            self.connect("destroy", lambda w: self._stop_gsettings_monitor())
         except Exception:
             pass
 
     def _on_gsettings_output(self, channel, condition):
+        if condition & (GLib.IO_HUP | GLib.IO_ERR):
+            return False
         try:
-            res = channel.read_line()
-            if not res:
-                return True
-            line, length = res
-            if line is None:
+            status, line, length, _terminator = channel.read_line()
+            if status != GLib.IOStatus.NORMAL or line is None:
                 return True
             line = line.strip()
-            # schedule UI update in main loop
-            GLib.idle_add(self._handle_gsettings_change, line)
-        except Exception:
-            # ignore transient read errors
-            pass
+            if line:
+                # schedule UI update in main loop
+                GLib.idle_add(self._handle_gsettings_change, line)
+        except Exception as e:
+            try:
+                self.logger.exception(f"Chyba pri čítaní GSettings monitora: {e}")
+            except Exception:
+                pass
         return True
 
     def _handle_gsettings_change(self, line):
@@ -180,7 +195,7 @@ class AzurevpnWindow(Adw.ApplicationWindow):
 
     def _stop_gsettings_monitor(self):
         try:
-            if getattr(self, '_gsettings_proc', None):
+            if getattr(self, "_gsettings_proc", None):
                 try:
                     self._gsettings_proc.terminate()
                 except Exception:
@@ -191,10 +206,17 @@ class AzurevpnWindow(Adw.ApplicationWindow):
 
     def connect_to_ssh(self, button):
         ssh = SshMethods()
-        client = ssh.start_vpn('vpnuser@192.168.122.148', local_port=1080, bind_address='127.0.0.1', key_file='~/.ssh/githubSsh', background=True, extra_options=None)
+        client = ssh.start_vpn(
+            "vpnuser@192.168.122.148",
+            local_port=1080,
+            bind_address="127.0.0.1",
+            key_file="~/.ssh/githubSsh",
+            background=True,
+            extra_options=None,
+        )
         print(client)
         return client
-    
+
     def disconnect_ssh(self, button):
         ssh = SshMethods()
         client = ssh.stop_vpn()
