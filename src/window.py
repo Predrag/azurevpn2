@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import logging
+import os
 from gi.repository import Adw, Gtk, GLib
 from .proxy_state import ProxyState
 from .ssh_methods import SshMethods
@@ -22,6 +23,17 @@ class AzurevpnWindow(Adw.ApplicationWindow):
         self.proxy_button.connect("clicked", self.proxy_button_handler)
         # Setup logging to the text view
         self._setup_ui_logging()
+        # start monitor to detect external changes to proxy gsettings
+        try:
+            self._start_gsettings_monitor()
+        except Exception:
+            # not fatal; continue without monitor
+            self.logger.exception("Nepodarilo sa spustiť GSettings monitor")
+        # ensure UI matches current proxy state on startup
+        try:
+            self._update_proxy_ui_from_state()
+        except Exception:
+            self.logger.exception("Nepodarilo sa inicializovať stav proxy UI")
 
     def _setup_ui_logging(self):
         buf = self.log_view.get_buffer()
@@ -94,6 +106,88 @@ class AzurevpnWindow(Adw.ApplicationWindow):
                 self.logger.exception(f"Kritická chyba pri prepínaní proxy: {e}")
             except Exception:
                 print(f"Kritická chyba pri prepínaní proxy: {e}")
+
+    def _update_proxy_ui_from_state(self):
+        try:
+            state = ProxyState()
+            current = state.current_state.stdout.strip()
+            if current == "'none'":
+                # proxy is stopped
+                self.proxy_button.remove_css_class("suggested-action")
+                self.proxy_button.add_css_class("destructive-action")
+                self.proxy_button.set_label("Zapnuť Proxy")
+            else:
+                # proxy is running
+                self.proxy_button.remove_css_class("destructive-action")
+                self.proxy_button.add_css_class("suggested-action")
+                self.proxy_button.set_label("Vypnuť Proxy")
+        except Exception:
+            # best-effort, don't crash UI
+            self.logger.exception("Chyba pri aktualizácii UI stavu proxy")
+
+    def _start_gsettings_monitor(self):
+        # use flatpak-spawn --host to monitor host gsettings changes
+        args = [
+            "flatpak-spawn",
+            "--host",
+            "gsettings",
+            "monitor",
+            "org.gnome.system.proxy",
+            "mode",
+        ]
+        # start subprocess with line-buffered text output
+        self._gsettings_proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
+        fd = self._gsettings_proc.stdout.fileno()
+        try:
+            os.set_blocking(fd, False)
+        except Exception:
+            pass
+        self._gsettings_channel = GLib.IOChannel.unix_new(fd)
+        GLib.io_add_watch(self._gsettings_channel, GLib.IO_IN | GLib.IO_HUP | GLib.IO_ERR, self._on_gsettings_output)
+        # ensure we stop the child when window is destroyed
+        try:
+            self.connect('destroy', lambda w: self._stop_gsettings_monitor())
+        except Exception:
+            pass
+
+    def _on_gsettings_output(self, channel, condition):
+        try:
+            res = channel.read_line()
+            if not res:
+                return True
+            line, length = res
+            if line is None:
+                return True
+            line = line.strip()
+            # schedule UI update in main loop
+            GLib.idle_add(self._handle_gsettings_change, line)
+        except Exception:
+            # ignore transient read errors
+            pass
+        return True
+
+    def _handle_gsettings_change(self, line):
+        # simply re-read the current proxy state and update UI
+        try:
+            self.logger.info(f"GSettings change detected: {line}")
+        except Exception:
+            pass
+        try:
+            self._update_proxy_ui_from_state()
+        except Exception:
+            self.logger.exception("Chyba pri spracovaní zmeny GSettings")
+        return False
+
+    def _stop_gsettings_monitor(self):
+        try:
+            if getattr(self, '_gsettings_proc', None):
+                try:
+                    self._gsettings_proc.terminate()
+                except Exception:
+                    pass
+                self._gsettings_proc = None
+        except Exception:
+            pass
 
     def connect_to_ssh(self, button):
         ssh = SshMethods()
