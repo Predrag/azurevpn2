@@ -46,6 +46,8 @@ class AzurevpnApplication(Adw.Application):
         self._tray.register()
         # Keep the app running even when all windows are hidden
         self.hold()
+        # First activation should not show window
+        self._first_activate = True
 
     def do_activate(self):
         """Called when the application is activated.
@@ -54,23 +56,32 @@ class AzurevpnApplication(Adw.Application):
         necessary.
         """
 
+        # On first launch, just create the window hidden (for tray operation)
+        if self._first_activate:
+            self._first_activate = False
+            win = AzurevpnWindow(application=self)
+            self._init_proxy_button(win)
+            # Don't present — stay in tray only
+            return
+
         win = self.props.active_window
         if not win:
             win = AzurevpnWindow(application=self)
-        # Update UI (button state) after window is created
+            self._init_proxy_button(win)
+        win.present()
+
+    def _init_proxy_button(self, win):
+        """Set proxy button state based on current proxy mode."""
         try:
             btn = getattr(win, "proxy_button", None)
             if self.proxy_state.current_state.stdout.strip() == "'none'":
-                # set label or style according to previously-detected state
                 btn.set_label("Zapnuť Proxy")
                 btn.add_css_class("destructive-action")
             else:
                 btn.set_label("Vypnuť Proxy")
                 btn.add_css_class("suggested-action")
-
         except Exception:
             pass
-        win.present()
 
     def create_action(self, name, callback, shortcuts=None):
         """Add an application action.
