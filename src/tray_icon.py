@@ -115,9 +115,12 @@ class TrayIcon:
         # Menu items: list of (id, label, action_name_or_None)
         self._menu_items = [
             (1, "Zobraziť okno", "show"),
-            (2, "Zapnuť Proxy", "toggle-proxy"),
-            (3, "", None),  # separator
-            (4, "Ukončiť", "quit"),
+            (2, "Zapnúť VPN", "start-vpn"),
+            (3, "Vypnúť VPN", "stop-vpn"),
+            (4, "Zapnúť Proxy", "start-proxy"),
+            (5, "Vypnúť Proxy", "stop-proxy"),
+            (6, "", None),  # separator
+            (7, "Ukončiť", "quit"),
         ]
 
     # ── public API ───────────────────────────────────────────────────
@@ -143,12 +146,7 @@ class TrayIcon:
             Gio.bus_unown_name(self._bus_name_id)
 
     def update_proxy_label(self, proxy_active: bool):
-        """Update the proxy menu item label and emit LayoutUpdated."""
-        self._menu_items[1] = (
-            2,
-            "Vypnuť Proxy" if proxy_active else "Zapnuť Proxy",
-            "toggle-proxy",
-        )
+        """Emit LayoutUpdated so the tray menu refreshes."""
         self._menu_revision += 1
         if self._bus and self._menu_reg_id:
             self._bus.emit_signal(
@@ -314,11 +312,13 @@ class TrayIcon:
             children = []
             for item_id, label, action in self._menu_items:
                 props = self._item_properties(item_id, label, action)
-                child = GLib.Variant(
-                    "v", GLib.Variant("(ia{sv}av)", (item_id, props, []))
-                )
+                # Each child is (ia{sv}av); GLib wraps it in variant for av
+                child = GLib.Variant("(ia{sv}av)", (item_id, props, []))
                 children.append(child)
-            return (0, {}, children)
+            root_props = {
+                "children-display": GLib.Variant("s", "submenu"),
+            }
+            return (0, root_props, children)
         else:
             for item_id, label, action in self._menu_items:
                 if item_id == parent_id:
@@ -329,23 +329,45 @@ class TrayIcon:
     # ── actions ──────────────────────────────────────────────────────
 
     def _activate_window(self):
-        """Show / raise the application window."""
-        win = self._app.get_active_window()
-        if win:
+        """Show / raise the application window (re-create if needed)."""
+        # Try to find an existing window (may be hidden)
+        for win in self._app.get_windows():
+            win.set_visible(True)
             win.present()
-        else:
-            self._app.activate()
+            return False
+        # No window exists — activate will create a new one
+        self._app.activate()
         return False
+
+    def _get_window(self):
+        """Return the first app window, or None."""
+        windows = self._app.get_windows()
+        return windows[0] if windows else None
 
     def _handle_menu_click(self, item_id):
         action_map = {item[0]: item[2] for item in self._menu_items}
         action = action_map.get(item_id)
         if action == "show":
             self._activate_window()
-        elif action == "toggle-proxy":
-            win = self._app.get_active_window()
+        elif action == "start-vpn":
+            win = self._get_window()
+            if win and hasattr(win, "connect_to_ssh"):
+                win.connect_to_ssh(None)
+        elif action == "stop-vpn":
+            win = self._get_window()
+            if win and hasattr(win, "disconnect_ssh"):
+                win.disconnect_ssh(None)
+        elif action == "start-proxy":
+            win = self._get_window()
             if win and hasattr(win, "proxy_button_handler"):
+                # simulate clicking when proxy is off
+                win.proxy_button_handler(win.proxy_button)
+        elif action == "stop-proxy":
+            win = self._get_window()
+            if win and hasattr(win, "proxy_button_handler"):
+                # simulate clicking when proxy is on
                 win.proxy_button_handler(win.proxy_button)
         elif action == "quit":
+            self._app.release()  # release the hold() so the app can quit
             self._app.quit()
         return False

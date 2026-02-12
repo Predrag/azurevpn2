@@ -22,6 +22,8 @@ class AzurevpnWindow(Adw.ApplicationWindow):
         self.zapni_vpn_button.connect("clicked", self.connect_to_ssh)
         self.vypni_vpn_button.connect("clicked", self.disconnect_ssh)
         self.proxy_button.connect("clicked", self.proxy_button_handler)
+        # Hide window instead of destroying it when user clicks X
+        self.connect("close-request", self._on_close_request)
         # Setup logging to the text view
         self._setup_ui_logging()
         # start monitor to detect external changes to proxy gsettings
@@ -212,6 +214,11 @@ class AzurevpnWindow(Adw.ApplicationWindow):
                 self._gsettings_proc = None
         except Exception:
             pass
+
+    def _on_close_request(self, window):
+        """Hide the window instead of closing the app."""
+        self.set_visible(False)
+        return True  # stop default close/destroy
 
     def connect_to_ssh(self, button):
         ssh = SshMethods()

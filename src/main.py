@@ -44,6 +44,8 @@ class AzurevpnApplication(Adw.Application):
         # System tray icon
         self._tray = TrayIcon(self)
         self._tray.register()
+        # Keep the app running even when all windows are hidden
+        self.hold()
 
     def do_activate(self):
         """Called when the application is activated.
