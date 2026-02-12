@@ -220,6 +220,26 @@ class AzurevpnWindow(Adw.ApplicationWindow):
         self.set_visible(False)
         return True  # stop default close/destroy
 
+    def start_proxy(self):
+        """Start proxy if not already running."""
+        try:
+            state = ProxyState()
+            current = state.current_state.stdout.strip()
+            if current == "'none'":
+                self.proxy_button_handler(self.proxy_button)
+        except Exception as e:
+            self.logger.exception(f"Chyba pri zapínaní proxy: {e}")
+
+    def stop_proxy(self):
+        """Stop proxy if running."""
+        try:
+            state = ProxyState()
+            current = state.current_state.stdout.strip()
+            if current != "'none'":
+                self.proxy_button_handler(self.proxy_button)
+        except Exception as e:
+            self.logger.exception(f"Chyba pri vypínaní proxy: {e}")
+
     def connect_to_ssh(self, button):
         ssh = SshMethods()
         client = ssh.start_vpn(
@@ -231,10 +251,24 @@ class AzurevpnWindow(Adw.ApplicationWindow):
             extra_options=None,
         )
         print(client)
+        # Update tray overlay
+        try:
+            tray = getattr(self.get_application(), "_tray", None)
+            if tray:
+                tray.update_vpn_state(True)
+        except Exception:
+            pass
         return client
 
     def disconnect_ssh(self, button):
         ssh = SshMethods()
         client = ssh.stop_vpn()
         print(client)
+        # Update tray overlay
+        try:
+            tray = getattr(self.get_application(), "_tray", None)
+            if tray:
+                tray.update_vpn_state(False)
+        except Exception:
+            pass
         return client

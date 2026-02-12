@@ -8,6 +8,18 @@ install_data(
   install_dir: get_option('datadir') / 'icons' / scalable_dir
 )
 
+# Install active variant SVG (with green indicator)
+install_data(
+  icon_name + '-active.svg',
+  install_dir: get_option('datadir') / 'icons' / scalable_dir
+)
+
+# Install inactive variant SVG (with red indicator)
+install_data(
+  icon_name + '-inactive.svg',
+  install_dir: get_option('datadir') / 'icons' / scalable_dir
+)
+
 # Install PNGs into the hicolor theme hierarchy. Flatpak export expects the
 # icon filename to match the application id (e.g. org.gnome.azurevpn.png)
 # inside each size directory, so install the files from

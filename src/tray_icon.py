@@ -111,16 +111,16 @@ class TrayIcon:
         self._bus_name_id = 0
         self._menu_revision = 1
         self._tooltip_text = "Azure VPN"
+        self._vpn_active = False
+        self._proxy_active = False
 
         # Menu items: list of (id, label, action_name_or_None)
         self._menu_items = [
             (1, "Zobraziť okno", "show"),
             (2, "Zapnúť VPN", "start-vpn"),
             (3, "Vypnúť VPN", "stop-vpn"),
-            (4, "Zapnúť Proxy", "start-proxy"),
-            (5, "Vypnúť Proxy", "stop-proxy"),
-            (6, "", None),  # separator
-            (7, "Ukončiť", "quit"),
+            (4, "", None),  # separator
+            (5, "Ukončiť", "quit"),
         ]
 
     # ── public API ───────────────────────────────────────────────────
@@ -147,6 +147,7 @@ class TrayIcon:
 
     def update_proxy_label(self, proxy_active: bool):
         """Emit LayoutUpdated so the tray menu refreshes."""
+        self._proxy_active = proxy_active
         self._menu_revision += 1
         if self._bus and self._menu_reg_id:
             self._bus.emit_signal(
@@ -156,6 +157,29 @@ class TrayIcon:
                 "LayoutUpdated",
                 GLib.Variant("(ui)", (self._menu_revision, 0)),
             )
+        self._emit_overlay_update()
+
+    def update_vpn_state(self, vpn_active: bool):
+        """Update VPN state and refresh overlay icon."""
+        self._vpn_active = vpn_active
+        self._emit_overlay_update()
+
+    def _emit_overlay_update(self):
+        """Emit NewIcon signal so the indicator refreshes the icon."""
+        if self._bus and self._sni_reg_id:
+            self._bus.emit_signal(
+                None,
+                _SNI_PATH,
+                "org.kde.StatusNotifierItem",
+                "NewIcon",
+                None,
+            )
+
+    def _current_icon_name(self):
+        """Return the appropriate icon name based on VPN+proxy state."""
+        if self._vpn_active and self._proxy_active:
+            return "org.gnome.azurevpn-active"
+        return "org.gnome.azurevpn-inactive"
 
     def update_tooltip(self, text: str):
         self._tooltip_text = text
@@ -245,7 +269,7 @@ class TrayIcon:
         elif prop == "Status":
             return GLib.Variant("s", "Active")
         elif prop == "IconName":
-            return GLib.Variant("s", "org.gnome.azurevpn")
+            return GLib.Variant("s", self._current_icon_name())
         elif prop == "IconThemePath":
             return GLib.Variant("s", "")
         elif prop == "ToolTip":
@@ -351,22 +375,18 @@ class TrayIcon:
             self._activate_window()
         elif action == "start-vpn":
             win = self._get_window()
-            if win and hasattr(win, "connect_to_ssh"):
-                win.connect_to_ssh(None)
+            if win:
+                if hasattr(win, "connect_to_ssh"):
+                    win.connect_to_ssh(None)
+                if hasattr(win, "start_proxy"):
+                    win.start_proxy()
         elif action == "stop-vpn":
             win = self._get_window()
-            if win and hasattr(win, "disconnect_ssh"):
-                win.disconnect_ssh(None)
-        elif action == "start-proxy":
-            win = self._get_window()
-            if win and hasattr(win, "proxy_button_handler"):
-                # simulate clicking when proxy is off
-                win.proxy_button_handler(win.proxy_button)
-        elif action == "stop-proxy":
-            win = self._get_window()
-            if win and hasattr(win, "proxy_button_handler"):
-                # simulate clicking when proxy is on
-                win.proxy_button_handler(win.proxy_button)
+            if win:
+                if hasattr(win, "stop_proxy"):
+                    win.stop_proxy()
+                if hasattr(win, "disconnect_ssh"):
+                    win.disconnect_ssh(None)
         elif action == "quit":
             self._app.release()  # release the hold() so the app can quit
             self._app.quit()
