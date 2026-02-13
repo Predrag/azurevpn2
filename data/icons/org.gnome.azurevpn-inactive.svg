@@ -45,7 +45,7 @@
   </g>
 
   <!-- RED SQUARE indicator — bottom-right corner -->
-  <rect x="305" y="305" width="195" height="195" rx="28" fill="#E03030" stroke="#A02020"
+  <rect x="305" y="305" width="240" height="240" rx="28" fill="#E03030" stroke="#A02020"
     stroke-width="6" />
   <line x1="360" y1="360" x2="445" y2="445" stroke="#fff" stroke-width="18" stroke-linecap="round" />
   <line x1="445" y1="360" x2="360" y2="445" stroke="#fff" stroke-width="18" stroke-linecap="round" />
