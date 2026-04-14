@@ -26,6 +26,8 @@ class AzurevpnWindow(Adw.ApplicationWindow):
         self.connect("close-request", self._on_close_request)
         # Setup logging to the text view
         self._setup_ui_logging()
+        # Create SSH instance that persists across start/stop calls
+        self.ssh = SshMethods()
         # start monitor to detect external changes to proxy gsettings
         try:
             self._start_gsettings_monitor()
@@ -91,7 +93,7 @@ class AzurevpnWindow(Adw.ApplicationWindow):
                 self.logger.info("Proxy state is 'none' — starting proxy")
                 # Zapni proxy
                 self.proxy_state.proxy_started()
-                self.logger.info("Proxy started")
+                self.logger.info("Proxy GSettings set to 'manual'")
                 # Zmen farbu tlaidla na modrú
                 self.proxy_button.remove_css_class("destructive-action")
                 self.proxy_button.add_css_class("suggested-action")
@@ -100,7 +102,7 @@ class AzurevpnWindow(Adw.ApplicationWindow):
                 self.logger.info(f"Proxy state is {current} — stopping proxy")
                 # Vypni proxy
                 self.proxy_state.proxy_stopped()
-                self.logger.info("Proxy stopped")
+                self.logger.info("Proxy GSettings set to 'none'")
                 # Zmen farbu tlaidla na predvolenú (odstráni modrú farbu)
                 self.proxy_button.remove_css_class("suggested-action")
                 self.proxy_button.add_css_class("destructive-action")

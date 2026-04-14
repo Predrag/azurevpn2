@@ -254,7 +254,9 @@ class SshMethods:
             cmd.append('-f')
         cmd += ['-o', 'ExitOnForwardFailure=yes']
         if key_file:
-            cmd += ['-i', key_file]
+            # Expand ~ to user's home directory (shell doesn't do this in subprocess)
+            expanded_key = os.path.expanduser(key_file)
+            cmd += ['-i', expanded_key]
         if extra_options:
             cmd += extra_options
         cmd.append(user_at_host)
