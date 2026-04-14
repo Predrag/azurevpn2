@@ -243,7 +243,7 @@ class AzurevpnWindow(Adw.ApplicationWindow):
     def connect_to_ssh(self, button):
         ssh = SshMethods()
         client = ssh.start_vpn(
-            "vpnuser@192.168.122.148",
+            "marti@192.168.122.57",
             local_port=1080,
             bind_address="127.0.0.1",
             key_file="~/.ssh/githubSsh",
