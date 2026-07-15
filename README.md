@@ -12,7 +12,7 @@ Požiadavky
 - Aktualizujte verziu v súbore `meson.build` a v metainfo (`org.gnome.azurevpn.metainfo.xml` alebo v manifeste Flatpaku).
 - Aktualizujte `CHANGELOG` alebo `NEWS.md` s popisom zmien.
 
-2. Lokálny build (native)
+1. Lokálny build (native)
 
 ```bash
 meson setup _build || meson configure _build
@@ -20,7 +20,7 @@ meson compile -C _build
 meson test -C _build
 ```
 
-3. Build ako Flatpak a export do lokálneho repozitára
+1. Build ako Flatpak a export do lokálneho repozitára
 
 - Vytvorte priečinok pre build a spustite `flatpak-builder` s BUILD_DIR pred manifestom (DÔLEŽITÉ):
 
@@ -31,7 +31,7 @@ flatpak-builder --force-clean --repo=local-azurevpn build-dir org.gnome.azurevpn
 
 - Poznámka: syntax je `flatpak-builder [OPTIONS] BUILD_DIR MANIFEST` — ak vynecháte `BUILD_DIR`, build zlyhá.
 
-4. Aktualizácia metadát repozitára (AppStream / summary)
+1. Aktualizácia metadát repozitára (AppStream / summary)
 
 ```bash
 flatpak build-update-repo local-azurevpn
@@ -39,12 +39,12 @@ flatpak build-update-repo local-azurevpn
 
 - Po spustení sa vytvorí/aktualizuje vetva `appstream` a `summary`, ktoré používa GNOME Software.
 
-5. Pridanie lokálneho repozitára ako remote a inštalácia/aktualizácia
+1. Pridanie lokálneho repozitára ako remote a inštalácia/aktualizácia
 
 - Pridať remote (používateľská inštalácia):
 
 ```bash
-flatpak --user remote-add --no-gpg-verify azurevpn-local file:///home/predrag/Projekty/azureVpn/local-azurevpn
+flatpak --user remote-add --no-gpg-verify azurevpn-local file:///home/predrag/Projekty/azureVpn2/local-azurevpn
 ```
 
 - Inštalovať alebo preinštalovať aplikáciu z lokálneho remote:
@@ -55,7 +55,7 @@ flatpak --user install --reinstall azurevpn-local org.gnome.azurevpn -y
 flatpak --user update org.gnome.azurevpn --from=azurevpn-local
 ```
 
-6. Ak GNOME Software stále zobrazuje starú verziu
+1. Ak GNOME Software stále zobrazuje starú verziu
 
 - Skontrolujte, či v metainfo (`org.gnome.azurevpn.metainfo.xml`) je správne nastavené `<release>`/`<version>`.
 - Uistite sa, že ste spustili `flatpak build-update-repo` (AppStream sa generuje/aktualizuje).
@@ -66,12 +66,12 @@ killall gnome-software || true
 gnome-software & disown
 ```
 
-7. Publikovanie na Flathub / verejné repo
+1. Publikovanie na Flathub / verejné repo
 
 - Flathub používa manifest PR workflow. Pre publikovanie na Flathub postupujte podľa oficiálnej dokumentácie: spravidla vytvoríte PR v repozitári `flathub` alebo použijete návod pre `flathub` packaging (manifest, CI checks).
 - Ak potrebujete uploadovať artefakty inde, vytvorte GitHub Release a nahrajte `dist/` súbory alebo `.flatpakref` (ak ho generujete externým nástrojom).
 
-8. Automatizácia (odporúčané)
+1. Automatizácia (odporúčané)
 
 - Nastavte CI (GitHub Actions / GitLab CI) ktoré:
   - upraví verziu pri tagu, spustí unit testy

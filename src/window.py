@@ -2,32 +2,57 @@ import subprocess
 import sys
 import logging
 import os
-from gi.repository import Adw, Gtk, GLib
+from gi.repository import Adw, Gtk, GLib, Gio
 from .proxy_state import ProxyState
 from .ssh_methods import SshMethods
+from .connections_manager import ConnectionsManager
 
 
 @Gtk.Template(resource_path="/org/gnome/azurevpn/window.ui")
 class AzurevpnWindow(Adw.ApplicationWindow):
     __gtype_name__ = "AzurevpnWindow"
 
-    # label = Gtk.Template.Child()
+    # UI Components
     zapni_vpn_button: Gtk.Button = Gtk.Template.Child()
     vypni_vpn_button: Gtk.Button = Gtk.Template.Child()
     proxy_button: Gtk.Button = Gtk.Template.Child()
     log_view: Gtk.TextView = Gtk.Template.Child()
 
+    # Connection form components
+    connections_combo: Adw.ComboRow = Gtk.Template.Child()
+    connection_name_entry: Adw.EntryRow = Gtk.Template.Child()
+    user_entry: Adw.EntryRow = Gtk.Template.Child()
+    host_entry: Adw.EntryRow = Gtk.Template.Child()
+    port_entry: Adw.EntryRow = Gtk.Template.Child()
+    key_file_entry: Adw.EntryRow = Gtk.Template.Child()
+    local_port_entry: Adw.EntryRow = Gtk.Template.Child()
+    save_connection_button: Gtk.Button = Gtk.Template.Child()
+    delete_connection_button: Gtk.Button = Gtk.Template.Child()
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # Setup logging first
+        self._setup_ui_logging()
+
+        # Initialize connections manager
+        self.connections_manager = ConnectionsManager()
+
+        # Connect button signals
         self.zapni_vpn_button.connect("clicked", self.connect_to_ssh)
         self.vypni_vpn_button.connect("clicked", self.disconnect_ssh)
         self.proxy_button.connect("clicked", self.proxy_button_handler)
+        self.save_connection_button.connect("clicked", self.save_connection)
+        self.delete_connection_button.connect("clicked", self.delete_connection)
+
+        # Setup connections combo box
+        self._setup_connections_combo()
+
         # Hide window instead of destroying it when user clicks X
         self.connect("close-request", self._on_close_request)
-        # Setup logging to the text view
-        self._setup_ui_logging()
+
         # Create SSH instance that persists across start/stop calls
         self.ssh = SshMethods()
+
         # start monitor to detect external changes to proxy gsettings
         try:
             self._start_gsettings_monitor()
@@ -242,13 +267,135 @@ class AzurevpnWindow(Adw.ApplicationWindow):
         except Exception as e:
             self.logger.exception(f"Chyba pri vypínaní proxy: {e}")
 
+    def _setup_connections_combo(self):
+        """Setup the connections combo box with saved connections."""
+        connections = self.connections_manager.load_connections()
+
+        # Create string list model
+        string_list = Gtk.StringList()
+        string_list.append("-- Nové pripojenie --")
+
+        for conn in connections:
+            name = conn.get("name", "Bez názvu")
+            string_list.append(name)
+
+        self.connections_combo.set_model(string_list)
+        self.connections_combo.set_selected(0)
+
+        # Connect to selection change
+        self.connections_combo.connect("notify::selected", self._on_connection_selected)
+
+    def _on_connection_selected(self, combo, _param):
+        """Handle connection selection from combo box."""
+        selected = combo.get_selected()
+        if selected == 0:
+            # "Nové pripojenie" - clear form
+            self.connection_name_entry.set_text("")
+            self.user_entry.set_text("")
+            self.host_entry.set_text("")
+            self.port_entry.set_text("22")
+            self.key_file_entry.set_text("~/.ssh/id_rsa")
+            self.local_port_entry.set_text("1080")
+            return
+
+        # Load selected connection
+        connections = self.connections_manager.load_connections()
+        if selected - 1 < len(connections):
+            conn = connections[selected - 1]
+            self.connection_name_entry.set_text(conn.get("name", ""))
+            self.user_entry.set_text(conn.get("user", ""))
+            self.host_entry.set_text(conn.get("host", ""))
+            self.port_entry.set_text(str(conn.get("port", 22)))
+            self.key_file_entry.set_text(conn.get("key_file", "~/.ssh/id_rsa"))
+            self.local_port_entry.set_text(str(conn.get("local_port", 1080)))
+
+    def save_connection(self, button):
+        """Save current connection settings."""
+        name = self.connection_name_entry.get_text().strip()
+        user = self.user_entry.get_text().strip()
+        host = self.host_entry.get_text().strip()
+
+        if not name or not user or not host:
+            self.logger.error("Názov, používateľ a adresa sú povinné")
+            return
+
+        try:
+            port = int(self.port_entry.get_text().strip())
+            local_port = int(self.local_port_entry.get_text().strip())
+        except ValueError:
+            self.logger.error("Port musí byť číslo")
+            return
+
+        key_file = self.key_file_entry.get_text().strip()
+
+        # Check if updating existing connection
+        connections = self.connections_manager.load_connections()
+        existing = any(c.get("name") == name for c in connections)
+
+        if existing:
+            success = self.connections_manager.update_connection(
+                name, name, user, host, port, key_file, local_port
+            )
+            msg = "Pripojenie aktualizované" if success else "Chyba pri aktualizácii"
+        else:
+            success = self.connections_manager.add_connection(
+                name, user, host, port, key_file, local_port
+            )
+            msg = "Pripojenie uložené" if success else "Chyba pri ukladaní"
+
+        if success:
+            self.logger.info(msg)
+            self._setup_connections_combo()
+            # Select the saved connection
+            model = self.connections_combo.get_model()
+            for i in range(model.get_n_items()):
+                if model.get_string(i) == name:
+                    self.connections_combo.set_selected(i)
+                    break
+        else:
+            self.logger.error(msg)
+
+    def delete_connection(self, button):
+        """Delete selected connection."""
+        name = self.connection_name_entry.get_text().strip()
+        if not name:
+            self.logger.error("Vyberte pripojenie na zmazanie")
+            return
+
+        success = self.connections_manager.remove_connection(name)
+        if success:
+            self.logger.info(f"Pripojenie '{name}' zmazané")
+            self._setup_connections_combo()
+        else:
+            self.logger.error(f"Chyba pri mazaní pripojenia '{name}'")
+
     def connect_to_ssh(self, button):
+        """Connect to SSH using current form values."""
+        user = self.user_entry.get_text().strip()
+        host = self.host_entry.get_text().strip()
+
+        if not user or not host:
+            self.logger.error("Používateľ a adresa sú povinné")
+            return
+
+        try:
+            port = int(self.port_entry.get_text().strip())
+            local_port = int(self.local_port_entry.get_text().strip())
+        except ValueError:
+            self.logger.error("Port musí byť číslo")
+            return
+
+        key_file = self.key_file_entry.get_text().strip()
+        ssh_target = f"{user}@{host}"
+
+        self.logger.info(f"Pripájam sa na {ssh_target}...")
+
         ssh = SshMethods()
         client = ssh.start_vpn(
-            "marti@192.168.122.57",
-            local_port=1080,
+            ssh_target,
+            local_port=local_port,
             bind_address="127.0.0.1",
-            key_file="~/.ssh/githubSsh",
+            key_file=key_file,
             background=True,
             extra_options=None,
         )

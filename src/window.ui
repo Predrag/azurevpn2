@@ -22,21 +22,99 @@
             <property name="margin-start">24</property>
             <property name="margin-end">24</property>
             
+            <!-- Connection settings group -->
+            <child>
+              <object class="AdwPreferencesGroup">
+                <property name="title" translatable="yes">Pripojenie</property>
+                <child>
+                  <object class="AdwComboRow" id="connections_combo">
+                    <property name="title" translatable="yes">Uložené pripojenia</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+
+            <!-- Manual connection form -->
+            <child>
+              <object class="AdwPreferencesGroup">
+                <property name="title" translatable="yes">Nastavenia pripojenia</property>
+                <child>
+                  <object class="AdwEntryRow" id="connection_name_entry">
+                    <property name="title" translatable="yes">Názov</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwEntryRow" id="user_entry">
+                    <property name="title" translatable="yes">Používateľ</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwEntryRow" id="host_entry">
+                    <property name="title" translatable="yes">Adresa</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwEntryRow" id="port_entry">
+                    <property name="title" translatable="yes">SSH Port</property>
+                    <property name="text">22</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwEntryRow" id="key_file_entry">
+                    <property name="title" translatable="yes">SSH Kľúč</property>
+                    <property name="text">~/.ssh/id_rsa</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwEntryRow" id="local_port_entry">
+                    <property name="title" translatable="yes">Lokálny SOCKS Port</property>
+                    <property name="text">1080</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+
             <child>
               <!-- Horizontálny kontajner pre tlačidlá -->
               <object class="GtkBox">
                 <property name="orientation">horizontal</property>
                 <property name="spacing">12</property>
-                <property name="halign">center</property> <!-- Vycentruje tlačidlá v strede -->
-                
+                <property name="halign">center</property>
+
+                <child>
+                  <object class="GtkButton" id="save_connection_button">
+                    <property name="label" translatable="yes">Uložiť pripojenie</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="delete_connection_button">
+                    <property name="label" translatable="yes">Zmazať pripojenie</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+
+            <child>
+              <!-- VPN control buttons -->
+              <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <property name="spacing">12</property>
+                <property name="halign">center</property>
+
                 <child>
                   <object class="GtkButton" id="zapni_vpn_button">
                     <property name="label" translatable="yes">Zapni VPN</property>
+                    <style>
+                      <class name="suggested-action"/>
+                    </style>
                   </object>
                 </child>
                 <child>
                   <object class="GtkButton" id="vypni_vpn_button">
                     <property name="label" translatable="yes">Vypni VPN</property>
+                    <style>
+                      <class name="destructive-action"/>
+                    </style>
                   </object>
                 </child>
                 <child>
