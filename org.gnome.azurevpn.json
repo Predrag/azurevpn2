@@ -15,7 +15,8 @@
     "--own-name=org.kde.StatusNotifierItem-2-1",
     "--own-name=org.gnome.azurevpn.StatusNotifierItem",
     "--filesystem=~/.ssh:ro",
-    "--filesystem=xdg-run/ssh-agent:ro"
+    "--filesystem=xdg-run/ssh-agent:ro",
+    "--filesystem=xdg-config/azurevpn:create"
   ],
   "cleanup": [
     "/include",
