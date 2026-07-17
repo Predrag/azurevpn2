@@ -1,2 +1,9 @@
 /local-azurevpn/
 flatpak-build-repo/
+_build/
+build-dir/
+builddir/
+builddir_dev/
+install_dev/
+.flatpak-builder/
+flatpak-build-dir/
