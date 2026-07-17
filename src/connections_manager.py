@@ -34,8 +34,19 @@ class ConnectionsManager:
     def save_connections(self, connections):
         """Save connections to config file."""
         try:
+            # Load existing data to preserve last_used
+            data = {"connections": connections}
+            if self.config_file.exists():
+                try:
+                    with open(self.config_file, "r", encoding="utf-8") as f:
+                        existing_data = json.load(f)
+                        if "last_used" in existing_data:
+                            data["last_used"] = existing_data["last_used"]
+                except Exception:
+                    pass
+
             with open(self.config_file, "w", encoding="utf-8") as f:
-                json.dump({"connections": connections}, f, indent=2, ensure_ascii=False)
+                json.dump(data, f, indent=2, ensure_ascii=False)
             return True
         except Exception as e:
             self.logger.error(f"Chyba pri ukladaní pripojení: {e}")
@@ -99,3 +110,27 @@ class ConnectionsManager:
                 return self.save_connections(connections)
 
         return False
+
+    def get_last_used(self):
+        """Get the last used connection name."""
+        if not self.config_file.exists():
+            return None
+
+        try:
+            with open(self.config_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data.get("last_used")
+        except Exception as e:
+            self.logger.error(f"Chyba pri načítaní posledného pripojenia: {e}")
+            return None
+
+    def set_last_used(self, name):
+        """Set the last used connection name."""
+        try:
+            data = {"connections": self.load_connections(), "last_used": name}
+            with open(self.config_file, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            return True
+        except Exception as e:
+            self.logger.error(f"Chyba pri ukladaní posledného pripojenia: {e}")
+            return False

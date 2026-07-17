@@ -280,10 +280,22 @@ class AzurevpnWindow(Adw.ApplicationWindow):
             string_list.append(name)
 
         self.connections_combo.set_model(string_list)
-        self.connections_combo.set_selected(0)
 
-        # Connect to selection change
+        # Connect to selection change BEFORE setting selected index
         self.connections_combo.connect("notify::selected", self._on_connection_selected)
+
+        # Try to select last used connection
+        last_used = self.connections_manager.get_last_used()
+        selected_index = 0
+
+        if last_used:
+            for i in range(string_list.get_n_items()):
+                if string_list.get_string(i) == last_used:
+                    selected_index = i
+                    break
+
+        # Set selected index - this will trigger _on_connection_selected
+        self.connections_combo.set_selected(selected_index)
 
     def _on_connection_selected(self, combo, _param):
         """Handle connection selection from combo box."""
@@ -400,6 +412,12 @@ class AzurevpnWindow(Adw.ApplicationWindow):
             extra_options=None,
         )
         print(client)
+
+        # Save last used connection if a named connection is selected
+        connection_name = self.connection_name_entry.get_text().strip()
+        if connection_name:
+            self.connections_manager.set_last_used(connection_name)
+
         # Update tray overlay
         try:
             tray = getattr(self.get_application(), "_tray", None)
